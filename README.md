@@ -1,3 +1,3 @@
 # d3-Interactive-graph
 
-Open the html file using FireFox
+Download all the files into one folder. Open the html file using FireFox
