@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+
+<style>
+
+body {
+            font-family: "Arial", sans-serif;
+            white-space: nowrap;
+        }
+
+        .bar {
+            fill: #5f89ad;
+
+        }
+
+        .line {
+            fill: none;
+            stroke: red;
+        }
+
+
+
+        .label {
+            font-size: 13px;
+            fill: white;
+
+        }
+
+        div{
+          display: inline;
+        }
+
+
+
+</style>
+</head>
+<body>
+<script src="../lib/d3.v3.min.js"></script>
+<div id="barGraph"></div>
+<div id="lineGraph"></div>
+<script>
+
+//get data
+var data  = [
+  {city: 'San Antonio', population_2012: 1383505, growth: {year_2013:25405, year_2014:26644 , year_2015:28593 , year_2016:23591 , year_2017:24208}},
+{city: 'New York', population_2012: 8383504, growth: {year_2013:75138 , year_2014:62493 , year_2015:61324 , year_2016:32967 , year_2017:7272}},
+{city: 'Chicago', population_2012: 2717989, growth: {year_2013:6493 , year_2014:2051 , year_2015:-1379 , year_2016:-4879 , year_2017:-3825}},
+{city: 'Los Angeles', population_2012: 3859267, growth:{year_2013:32516 , year_2014:30885 , year_2015:30791 , year_2016:27657 , year_2017:18643}},
+{city: 'Phoenix', population_2012: 1495880, growth: {year_2013:25302 , year_2014:26547 , year_2015:27310 , year_2016:27003 , year_2017:24036}}
+];
+
+
+//sort bars on values
+data = data.sort(function(a,b){
+  return d3.ascending((a.population_2012+a.growth.year_2013+a.growth.year_2014+a.growth.year_2015+a.growth.year_2016+a.growth.year_2017),(b.population_2012+b.growth.year_2013+b.growth.year_2014+b.growth.year_2015+b.growth.year_2016+b.growth.year_2017));
+})
+
+function look(city){
+var d_P = []
+var date = [2013,2014,2015,2016,2017]
+data.forEach(function(d){
+if(d.city == city){
+  var date = [2013,2014,2015,2016,2017]
+  var p1 = (d.growth.year_2013/d.population_2012)*100;
+  var p_prev = d.population_2012+d.growth.year_2013;
+  var p2 = (d.growth.year_2014/p_prev)*100;
+  var p_prev1 = d.growth.year_2014+p_prev;
+  var p3 = (d.growth.year_2015/p_prev1)*100;
+  var p_prev2 = d.growth.year_2015+p_prev1;
+  var p4 = (d.growth.year_2016/p_prev2)*100;
+  var p_prev3 = d.growth.year_2016+p_prev2;
+  var p5 = (d.growth.year_2017/p_prev3)*100;
+  d_P.push([['2013',p1],['2014',p2],['2015',p3],['2016',p4],['2017',p5]])
+}
+
+});
+return d_P
+};
+
+
+var margin = {
+    top: 15,
+    right: 25,
+    bottom: 15,
+    left: 60
+};
+
+var width = 500 - margin.left - margin.right,
+    height = 300 - margin.top - margin.bottom;
+
+var svg = d3.select("#barGraph").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+function mouseover(d,i){
+d3.select(".bar[bar_id='"+i.toString()+"']").style("fill","red")
+  var data1 = look(d.city)
+
+
+var svg1 = d3.select("#lineGraph").append("svg").attr("width",400).attr("height",300).append("g").attr("transform", "translate(" + margin.left + "," + 0 + ")");
+var xScale = d3.scale.ordinal().domain([2013,2014,2015,2016,2017]).rangePoints([30,height-30])
+var yScale = d3.scale.linear().domain([d3.min(data1[0],function(d){return d[1]}),d3.max(data1[0],function(d){return d[1]})]).range([height-50,0])
+var xAxis1 = d3.svg.axis().scale(xScale).orient("bottom").tickSize(1)
+var yAxis1 = d3.svg.axis().scale(yScale).orient("left").tickSize(1);
+    svg1.append("g")
+        .attr("class", "axis x")
+        .attr("transform", "translate(" +  (40) + "," + (250) +")")
+        .call(xAxis1);
+
+    svg1.append("text")      // text label for the x axis
+        .attr("x", 180 )
+        .attr("y", 290 )
+        .style("text-anchor", "middle")
+        .text("Year");
+
+    svg1.append("text")
+        .attr("y", 25)
+        .attr("x",-150)
+        .style("text-anchor", "end")
+        .text("Pct%")
+        .attr("transform", "rotate(-90)");
+        //.attr("dy", "1em")
+
+    svg1.append("g")
+        .attr("class", "axis y")
+        .attr("transform", "translate(" + (70) + ","+ (30) + ")")
+        .call(yAxis1);
+
+
+var line = d3.svg.line().x(function(d){
+    return xScale(parseInt(d[0]))+40;})
+.y(function(d){return yScale(d[1])+30;});
+
+svg1.append('path')
+        .attr('class','line')
+        .attr("d",function(d){
+          return line(data1[0])});
+
+};
+var x = d3.scale.linear()
+    .range([0, width])
+    .domain([0, d3.max(data, function (d) {
+        return (d.population_2012+d.growth.year_2013+d.growth.year_2014+d.growth.year_2015+d.growth.year_2016+d.growth.year_2017);
+    })]);
+
+var y = d3.scale.ordinal()
+    .rangeRoundBands([height, 0], .1)
+    .domain(data.map(function (d) {
+        return (d.city);
+    }));
+
+//make y axis to show bar names
+var yAxis = d3.svg.axis()
+    .scale(y)
+    //no tick marks
+    .tickSize(0)
+    .orient("left")//.attr("transform","translate("+(70)+","+(0)+")");
+    //.
+
+var gy = svg.append("g")
+    .attr("class", "y axis").attr("transform","translate("+(50)+","+(0)+")")
+    .call(yAxis)//.attr("transform","translate("+(70)+","+(0)+")");//.selectAll("text").attr("text-anchor","end");
+
+var bars = svg.selectAll(".bar")
+    .data(data)
+    .enter()
+    .append("g")
+
+
+//append rects
+bars.append("rect")
+    .attr("class", "bar")
+    .attr("y", function (d) {
+        return y(d.city);
+    })
+    .attr("height", y.rangeBand())
+    .attr("x", 60)
+    .attr("width", function (d) {
+        return x(d.population_2012+d.growth.year_2013+d.growth.year_2014+d.growth.year_2015+d.growth.year_2016+d.growth.year_2017)})
+    .attr("bar_id",function(d,i){return i;})
+    .on("mouseover", mouseover)
+    .on("mouseout",mouseout);
+
+function mouseout(d,i){
+  d3.select(".bar[bar_id='"+i.toString()+"']").style("fill",null)
+
+  document.getElementById("lineGraph").innerHTML="";
+}
+
+
+//add a value label to the right of each bar
+var formatComma = d3.format(",");
+bars.append("text")
+    .attr("class", "label")
+    //.style("text-anchor", "middle")
+    //y position of the label is halfway down the bar
+    .attr("y", function (d) {
+        return y(d.city) + y.rangeBand() / 2 +4;
+    })
+    //x position is 3 pixels to the right of the bar
+
+    .attr("x", 70)//function (d) {
+        //return x((d.population_2012+d.growth.year_2013+d.growth.year_2014+d.growth.year_2//015+d.growth.year_2016+d.growth.year_2017)/1.2);
+    //})
+    .on("mouseover", mouseover)
+    .on("mouseout",mouseout)
+    .style("fill","white")
+    .text(function (d) {
+        return formatComma(d.population_2012+d.growth.year_2013+d.growth.year_2014+d.growth.year_2015+d.growth.year_2016+d.growth.year_2017)
+    //.attr("fill","white");
+    })
+    ;
+
+
+
+
+</script>
+</body>
+</html>
+
+
+
+
